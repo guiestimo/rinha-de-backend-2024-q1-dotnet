@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "rinha-de-backend-2024-q1-dotnet-API/1.0.0": {
+        "runtime": {
+          "rinha-de-backend-2024-q1-dotnet-API.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "rinha-de-backend-2024-q1-dotnet-API/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

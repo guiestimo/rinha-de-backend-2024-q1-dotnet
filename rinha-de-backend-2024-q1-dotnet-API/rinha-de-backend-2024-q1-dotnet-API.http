@@ -1,0 +1,6 @@
+@rinha_de_backend_2024_q1_dotnet_API_HostAddress = http://localhost:5051
+
+GET {{rinha_de_backend_2024_q1_dotnet_API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
