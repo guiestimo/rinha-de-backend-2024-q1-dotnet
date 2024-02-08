@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\rinha-de-backend-2024-q1-dotnet-API.props" />
-</Project>
