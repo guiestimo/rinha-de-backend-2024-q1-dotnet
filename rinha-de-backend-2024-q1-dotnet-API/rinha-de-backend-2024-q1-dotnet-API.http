@@ -1,6 +1,17 @@
+@rinha-de-backend-2024-q1-dotnet-API_HostAddress = https://localhost:7280
 @rinha_de_backend_2024_q1_dotnet_API_HostAddress = http://localhost:5051
 
-GET {{rinha_de_backend_2024_q1_dotnet_API_HostAddress}}/weatherforecast/
-Accept: application/json
+
+POST {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/1/transacoes
+Content-Type: application/json
+
+{
+    "valor": 3220000,
+    "tipo" : "c",
+    "descricao" : "asdasd"
+}
+###
+
+GET {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/6/extrato
 
 ###

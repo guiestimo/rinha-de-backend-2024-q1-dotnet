@@ -1,34 +1,40 @@
-var builder = WebApplication.CreateBuilder(args);
+using rinha_de_backend_2024_q1_dotnet_API.Entities;
+using rinha_de_backend_2024_q1_dotnet_API.Models.Transacoes;
+using rinha_de_backend_2024_q1_dotnet_API.Repository;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<ClientesDummy>();
 
 var app = builder.Build();
+var clienteApi = app.MapGroup("/clientes");
 
-// Configure the HTTP request pipeline.
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
+clienteApi.MapPost("{id}/transacoes", (int id, TransacoesRequest request, ClientesDummy dummy) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var cliente = dummy.RetornaClientePorId(id);
+    if (cliente is null)
+        return Results.NotFound();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    if (request.Tipo.Equals('d') && (cliente.Saldo - request.Valor + cliente.Limite) < 0)
+        return Results.BadRequest();
+
+
+    dummy.AddTransacao(request, cliente);
+
+
+
+    return Results.Ok(cliente);
 });
 
-app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+clienteApi.MapGet("{id}/extrato", (int id, ClientesDummy dummy) =>
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+    var extrato = dummy.RetornaExtrato(id);
+
+    if (extrato is null)
+        return Results.NotFound();
+
+
+    return Results.BadRequest(extrato);
+});
+
+
+app.Run();

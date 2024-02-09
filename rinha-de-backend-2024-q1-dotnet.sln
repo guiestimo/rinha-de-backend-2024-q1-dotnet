@@ -3,7 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rinha-de-backend-2024-q1-dotnet-API", "rinha-de-backend-2024-q1-dotnet-API\rinha-de-backend-2024-q1-dotnet-API.csproj", "{3EC116BE-8180-431A-B3C1-1DFB9136E36B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rinha-de-backend-2024-q1-dotnet-API", "rinha-de-backend-2024-q1-dotnet-API\rinha-de-backend-2024-q1-dotnet-API.csproj", "{3EC116BE-8180-431A-B3C1-1DFB9136E36B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01 - API", "01 - API", "{6DD91FAD-2472-4C9D-8232-DF88E957974D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFiles", "{668974BE-B86D-4CBD-A725-D0D4DB6C08E3}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +26,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3EC116BE-8180-431A-B3C1-1DFB9136E36B} = {6DD91FAD-2472-4C9D-8232-DF88E957974D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {51340064-B058-4F5B-8515-5F601E88C880}
