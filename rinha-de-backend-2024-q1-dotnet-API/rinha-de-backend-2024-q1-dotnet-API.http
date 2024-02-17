@@ -1,20 +1,20 @@
 @rinha-de-backend-2024-q1-dotnet-API_HostAddress = https://localhost:7280
 @rinha_de_backend_2024_q1_dotnet_API_HostAddress = http://localhost:5051
 @HostAddress_Docker = https://localhost:32768
-@HostAddress_Docker_Separate = http://localhost:5000
+@HostAddress_Docker_Separate = http://localhost:9999
 
 
 POST {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/1/transacoes
 Content-Type: application/json
 
 {
-    "valor": 3220000,
+    "valor": 1,
     "tipo" : "c",
-    "descricao" : "asdasd"
+    "descricao" : "devolve"
 }
 ###
 
-GET {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/1/extrato
+GET {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/6/extrato
 
 ###
 
@@ -25,3 +25,12 @@ GET {{HostAddress_Docker}}/clientes/1/extrato
 GET {{HostAddress_Docker_Separate}}/clientes/1/extrato
 
 ###
+POST {{HostAddress_Docker_Separate}}/clientes/1/transacoes
+Content-Type: application/json
+
+{
+    "valor": 100000,
+    "tipo" : "d",
+    "descricao" : "15"
+}
+ 

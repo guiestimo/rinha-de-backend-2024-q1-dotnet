@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Http.Timeouts;
+﻿using System.Text.Json.Serialization;
 
 namespace rinha_de_backend_2024_q1_dotnet_API.Entities
 {
     public class Cliente(int id, int limite, int saldo)
     {
+        [JsonIgnore]
         public int Id { get; private set; } = id;
         public int Limite { get; private set; } = limite;
         public int Saldo { get; private set; } = saldo;

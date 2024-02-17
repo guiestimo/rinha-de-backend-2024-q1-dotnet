@@ -6,9 +6,14 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Entities
     {
         [JsonIgnore]
         public int ClienteId { get; private set; } = clienteId;
+
         public int Valor { get; private set; } = valor;
+
         public char Tipo { get; private set; } = tipo;
-        public DateTime DataTransacao { get; private set; } = dataTransacao;
+
         public string Descricao { get; private set; } = descricao;
+
+        [JsonPropertyName("realizada_em")]
+        public DateTime DataTransacao { get; private set; } = dataTransacao;
     }
 }
