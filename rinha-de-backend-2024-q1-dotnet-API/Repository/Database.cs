@@ -7,25 +7,22 @@ using rinha_de_backend_2024_q1_dotnet_API.Options;
 
 namespace rinha_de_backend_2024_q1_dotnet_API.Repository
 {
-    public class Database
+    public class Database(IOptions<DbOptions> dbOptions)
     {
-        private readonly DbOptions _dbOptions;
-        private readonly NpgsqlDataSource _dataSource;
-        public Database(IOptions<DbOptions> dbOptions)
-        {
-            _dbOptions = dbOptions.Value;
-            _dataSource = new NpgsqlDataSourceBuilder(_dbOptions.ConnectionString).Build();
-        }
+        private readonly NpgsqlDataSource _dataSource = new NpgsqlSlimDataSourceBuilder(dbOptions.Value.ConnectionString).Build();
 
         private NpgsqlConnection CreateConnection() => _dataSource.OpenConnection();
 
-        public int? GetCliente(int idCliente)
+        public async Task<int?> GetClienteAsync(int idCliente)
         {
-            using var command = new NpgsqlCommand("SELECT ID FROM CLIENTE WHERE ID = @IdCliente", CreateConnection());
+            using var connection = CreateConnection();
+            using var command = new NpgsqlCommand(Scripts.GetCliente);
+            command.Connection = connection;
+
             command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);
-            using var reader = command.ExecuteReader();
+            using var reader = await command.ExecuteReaderAsync();
             int? id = null;
-            while (reader.Read())
+            while (await reader.ReadAsync())
             {
                 id = reader.GetInt32(0);
             }
@@ -33,31 +30,35 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             return id;
         }
 
-        public object? AddTransacao(Transacao transacao)
+        public async Task<object?> AddTransacaoAsync(Transacao transacao)
         {
             object? response = null;
             try
             {
-                response = UpdateSaldo(transacao);
-                using var command = new NpgsqlCommand(Scripts.InsertTransaction, CreateConnection());
+                response = await UpdateSaldoAsync(transacao);
+                using var connection = CreateConnection();
+                using var command = new NpgsqlCommand(Scripts.InsertTransaction);
+                command.Connection = connection;
                 command.Parameters.AddWithValue("@idCliente", NpgsqlDbType.Integer, transacao.ClienteId);
                 command.Parameters.AddWithValue("@valor", NpgsqlDbType.Integer, transacao.Valor);
                 command.Parameters.AddWithValue("@tipo", NpgsqlDbType.Varchar, transacao.Tipo);
                 command.Parameters.AddWithValue("@descricao", NpgsqlDbType.Varchar, transacao.Descricao);
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
             catch (Exception) { }
 
             return response;
         }
 
-        private object? UpdateSaldo(Transacao transacao)
+        private async Task<object?> UpdateSaldoAsync(Transacao transacao)
         {
-            using var command = new NpgsqlCommand(Scripts.UpdateSaldo(transacao.Tipo), CreateConnection());
+            using var connection = CreateConnection();
+            using var command = new NpgsqlCommand(Scripts.UpdateSaldo(transacao.Tipo));
+            command.Connection = connection;
             command.Parameters.AddWithValue("@valor", NpgsqlDbType.Integer, transacao.Valor);
             command.Parameters.AddWithValue("@idCliente", NpgsqlDbType.Integer, transacao.ClienteId);
-            var reader = command.ExecuteReader();
-            while (reader.Read())
+            var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
                 return new { Limite = reader.GetInt32(0), Saldo = reader.GetInt32(1) };
             }
@@ -65,18 +66,18 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             return null;
         }
 
-        public ExtratoViewModel GetExtrato(int idCliente)
+        public async Task<ExtratoViewModel> GetExtratoAsync(int idCliente)
         {
             var extrato = new ExtratoViewModel()
             {
-                Saldo = GetSaldo(idCliente),
+                Saldo = await GetSaldoAsync(idCliente),
                 UltimasTransacoes = []
             };
 
             using var command = new NpgsqlCommand(Scripts.GetExtrato, CreateConnection());
             command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
                 extrato.UltimasTransacoes.Add(new Transacao(
                     reader.GetInt32(0),
@@ -89,13 +90,15 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             return extrato;
         }
 
-        private SaldoViewModel GetSaldo(int idCliente)
+        private async Task<SaldoViewModel> GetSaldoAsync(int idCliente)
         {
             var saldo = new SaldoViewModel();
-            using var command = new NpgsqlCommand("SELECT saldo, limite FROM CLIENTE WHERE ID = @IdCliente", CreateConnection());
+            using var connection = CreateConnection();
+            using var command = new NpgsqlCommand("SELECT saldo, limite FROM CLIENTE WHERE ID = @IdCliente");
+            command.Connection = connection;
             command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
                 saldo = new SaldoViewModel
                 {

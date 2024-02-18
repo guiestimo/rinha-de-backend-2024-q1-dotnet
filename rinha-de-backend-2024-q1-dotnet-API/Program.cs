@@ -17,7 +17,7 @@ var app = builder.Build();
 var clienteApi = app.MapGroup("/clientes");
 
 
-clienteApi.MapPost("{id}/transacoes", (int id, TransacoesRequest request, Database database) =>
+clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, Database database) =>
 {
     if (string.IsNullOrWhiteSpace(request.Descricao) || request.Descricao.Length > 10)
         return TypedResults.UnprocessableEntity();
@@ -34,13 +34,13 @@ clienteApi.MapPost("{id}/transacoes", (int id, TransacoesRequest request, Databa
     if (transacaoType == TransacaoType.Invalid)
         return TypedResults.UnprocessableEntity();
 
-    var cliente = database.GetCliente(id);
+    var cliente = await database.GetClienteAsync(id);
 
     if (cliente is null)
         return Results.NotFound();
 
     var transacao = new Transacao(valor, request.Tipo, DateTime.Now, request.Descricao, id);
-    var response = database.AddTransacao(transacao);
+    var response = await database.AddTransacaoAsync(transacao);
 
     if (response is null)
         return TypedResults.UnprocessableEntity();
@@ -48,13 +48,13 @@ clienteApi.MapPost("{id}/transacoes", (int id, TransacoesRequest request, Databa
     return Results.Ok(response);
 });
 
-clienteApi.MapGet("{id}/extrato", (int id, Database database) =>
+clienteApi.MapGet("{id}/extrato", async (int id, Database database) =>
 {
-    var cliente = database.GetCliente(id);
+    var cliente = await database.GetClienteAsync(id);
     if (cliente is null)
         return Results.NotFound();
 
-    var extrato = database.GetExtrato(id);
+    var extrato = await database.GetExtratoAsync(id);
 
     return Results.Ok(extrato);
 });

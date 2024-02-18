@@ -2,6 +2,9 @@
 {
     public static class Scripts
     {
+        public static string GetCliente =
+            "SELECT ID FROM CLIENTE WHERE ID = @IdCliente";
+
         public static string InsertTransaction =
             "INSERT INTO transacao(id_cliente, valor, tipo, descricao) VALUES(@idCliente, @valor, @tipo, @descricao)";
 
