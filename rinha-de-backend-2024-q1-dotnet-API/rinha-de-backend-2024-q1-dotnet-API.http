@@ -8,13 +8,13 @@ POST {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/1/transacoes
 Content-Type: application/json
 
 {
-    "valor": 1,
-    "tipo" : "c",
+    "valor": 100000,
+    "tipo" : "d",
     "descricao" : "devolve"
 }
 ###
 
-GET {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/6/extrato
+GET {{rinha-de-backend-2024-q1-dotnet-API_HostAddress}}/clientes/1/extrato
 
 ###
 

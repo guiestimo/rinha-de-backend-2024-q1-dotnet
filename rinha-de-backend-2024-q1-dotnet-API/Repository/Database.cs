@@ -4,6 +4,7 @@ using NpgsqlTypes;
 using rinha_de_backend_2024_q1_dotnet_API.Entities;
 using rinha_de_backend_2024_q1_dotnet_API.Models.Extrato;
 using rinha_de_backend_2024_q1_dotnet_API.Options;
+using System.Drawing;
 
 namespace rinha_de_backend_2024_q1_dotnet_API.Repository
 {
@@ -11,59 +12,49 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
     {
         private readonly NpgsqlDataSource _dataSource = new NpgsqlSlimDataSourceBuilder(dbOptions.Value.ConnectionString).Build();
 
-        private NpgsqlConnection CreateConnection() => _dataSource.OpenConnection();
+        private async Task<NpgsqlConnection> CreateConnectionAsync() => await _dataSource.OpenConnectionAsync();
 
-        public async Task<int?> GetClienteAsync(int idCliente)
+
+        public async Task<object?> AddTransactionAsync(int valor, int id, string descricao, char tipo)
         {
-            using var connection = CreateConnection();
-            using var command = new NpgsqlCommand(Scripts.GetCliente);
+            NpgsqlCommand command;
+            if (tipo == 'd')
+                command = GetDebitoCommand();
+            else
+                command = GetCreditoCommand();
+
+            using var connection = await CreateConnectionAsync();             
+            command.Parameters.Add(new NpgsqlParameter<int>() { NpgsqlDbType = NpgsqlDbType.Integer });
+            command.Parameters.Add(new NpgsqlParameter<int>() { NpgsqlDbType = NpgsqlDbType.Integer });
+            command.Parameters.Add(new NpgsqlParameter<string>() { NpgsqlDbType = NpgsqlDbType.Varchar });
+            command.Parameters[0].Value = valor;
+            command.Parameters[1].Value = id;
+            command.Parameters[2].Value = descricao;
+
             command.Connection = connection;
 
-            command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);
             using var reader = await command.ExecuteReaderAsync();
-            int? id = null;
             while (await reader.ReadAsync())
             {
-                id = reader.GetInt32(0);
-            }
+                if (reader.GetBoolean(2) is false)
+                {
+                    return null;
+                }
 
-            return id;
-        }
-
-        public async Task<object?> AddTransacaoAsync(Transacao transacao)
-        {
-            object? response = null;
-            try
-            {
-                response = await UpdateSaldoAsync(transacao);
-                using var connection = CreateConnection();
-                using var command = new NpgsqlCommand(Scripts.InsertTransaction);
-                command.Connection = connection;
-                command.Parameters.AddWithValue("@idCliente", NpgsqlDbType.Integer, transacao.ClienteId);
-                command.Parameters.AddWithValue("@valor", NpgsqlDbType.Integer, transacao.Valor);
-                command.Parameters.AddWithValue("@tipo", NpgsqlDbType.Varchar, transacao.Tipo);
-                command.Parameters.AddWithValue("@descricao", NpgsqlDbType.Varchar, transacao.Descricao);
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (Exception) { }
-
-            return response;
-        }
-
-        private async Task<object?> UpdateSaldoAsync(Transacao transacao)
-        {
-            using var connection = CreateConnection();
-            using var command = new NpgsqlCommand(Scripts.UpdateSaldo(transacao.Tipo));
-            command.Connection = connection;
-            command.Parameters.AddWithValue("@valor", NpgsqlDbType.Integer, transacao.Valor);
-            command.Parameters.AddWithValue("@idCliente", NpgsqlDbType.Integer, transacao.ClienteId);
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                return new { Limite = reader.GetInt32(0), Saldo = reader.GetInt32(1) };
+                return new { Limite = reader.GetInt32(1), Saldo = reader.GetInt32(0) };
             }
 
             return null;
+        }
+
+        private static NpgsqlCommand GetCreditoCommand()
+        {
+            return new NpgsqlCommand(Scripts.InsertCreditoTransaction);
+        }
+
+        private static NpgsqlCommand GetDebitoCommand()
+        {
+            return new NpgsqlCommand(Scripts.InsertDebitoTransaction);
         }
 
         public async Task<ExtratoViewModel> GetExtratoAsync(int idCliente)
@@ -74,7 +65,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
                 UltimasTransacoes = []
             };
 
-            using var command = new NpgsqlCommand(Scripts.GetExtrato, CreateConnection());
+            using var command = new NpgsqlCommand(Scripts.GetExtrato, await CreateConnectionAsync());
             command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -93,7 +84,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
         private async Task<SaldoViewModel> GetSaldoAsync(int idCliente)
         {
             var saldo = new SaldoViewModel();
-            using var connection = CreateConnection();
+            using var connection = await CreateConnectionAsync();
             using var command = new NpgsqlCommand("SELECT saldo, limite FROM CLIENTE WHERE ID = @IdCliente");
             command.Connection = connection;
             command.Parameters.AddWithValue("@IdCliente", NpgsqlDbType.Integer, idCliente);

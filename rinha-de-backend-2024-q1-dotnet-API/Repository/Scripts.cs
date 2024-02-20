@@ -2,14 +2,13 @@
 {
     public static class Scripts
     {
-        public static string GetCliente =
-            "SELECT ID FROM CLIENTE WHERE ID = @IdCliente";
 
-        public static string InsertTransaction =
-            "INSERT INTO transacao(id_cliente, valor, tipo, descricao) VALUES(@idCliente, @valor, @tipo, @descricao)";
+        public static string InsertDebitoTransaction =
+            "select * from debito_transaction($1, $2, $3)";
 
-        public static string UpdateSaldo(char tipo) =>
-            $"UPDATE cliente SET saldo = saldo {(tipo == 'c' ? '+' : '-')} @valor WHERE ID = @idCliente RETURNING limite, saldo";
+        public static string InsertCreditoTransaction =
+            "select * from credito_transaction($1, $2, $3)";
+
 
         public static string GetExtrato =
             "SELECT valor, tipo, descricao, data_transacao, id_cliente FROM transacao where id_cliente = @idCliente " +

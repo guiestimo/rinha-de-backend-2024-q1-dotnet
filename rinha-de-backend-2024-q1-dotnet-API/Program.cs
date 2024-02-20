@@ -19,28 +19,16 @@ var clienteApi = app.MapGroup("/clientes");
 
 clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, Database database) =>
 {
+    if (id is (< 1 or > 5))
+        return TypedResults.NotFound();
     if (string.IsNullOrWhiteSpace(request.Descricao) || request.Descricao.Length > 10)
         return TypedResults.UnprocessableEntity();
     if (int.TryParse(request.Valor?.ToString(), out var valor) is false)
         return TypedResults.UnprocessableEntity();
-
-    var transacaoType = request.Tipo switch
-    {
-        'c' => TransacaoType.c,
-        'd' => TransacaoType.d,
-        _ => TransacaoType.Invalid
-    };
-
-    if (transacaoType == TransacaoType.Invalid)
+    if (request.Tipo != 'c' && request.Tipo != 'd')
         return TypedResults.UnprocessableEntity();
 
-    var cliente = await database.GetClienteAsync(id);
-
-    if (cliente is null)
-        return Results.NotFound();
-
-    var transacao = new Transacao(valor, request.Tipo, DateTime.Now, request.Descricao, id);
-    var response = await database.AddTransacaoAsync(transacao);
+    var response = await database.AddTransactionAsync(valor, id, request.Descricao, request.Tipo);
 
     if (response is null)
         return TypedResults.UnprocessableEntity();
@@ -50,9 +38,8 @@ clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, 
 
 clienteApi.MapGet("{id}/extrato", async (int id, Database database) =>
 {
-    var cliente = await database.GetClienteAsync(id);
-    if (cliente is null)
-        return Results.NotFound();
+    if (id is (< 1 or > 5))
+        return TypedResults.NotFound();
 
     var extrato = await database.GetExtratoAsync(id);
 
