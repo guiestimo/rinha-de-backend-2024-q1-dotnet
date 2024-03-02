@@ -1,17 +1,22 @@
 using rinha_de_backend_2024_q1_dotnet_API.Entities;
 using rinha_de_backend_2024_q1_dotnet_API.Models.Enums;
+using rinha_de_backend_2024_q1_dotnet_API.Models.Extrato;
 using rinha_de_backend_2024_q1_dotnet_API.Models.Transacoes;
 using rinha_de_backend_2024_q1_dotnet_API.Options;
 using rinha_de_backend_2024_q1_dotnet_API.Repository;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
+});
 
 var connectionString = builder.Configuration.GetConnectionString("RinhaDotNet");
 builder.Services.Configure<DbOptions>(options
         => options.ConnectionString = connectionString
             ?? throw new ArgumentNullException(connectionString));
 builder.Services.AddSingleton<Database>();
-
 
 var app = builder.Build();
 var clienteApi = app.MapGroup("/clientes");
@@ -48,3 +53,11 @@ clienteApi.MapGet("{id}/extrato", async (int id, Database database) =>
 
 
 app.Run();
+
+[JsonSerializable(typeof(TransacoesRequest))]
+[JsonSerializable(typeof(TransacoesResponse))]
+[JsonSerializable(typeof(ExtratoViewModel))]
+internal partial class AppJsonSerializerContext : JsonSerializerContext
+{
+
+}

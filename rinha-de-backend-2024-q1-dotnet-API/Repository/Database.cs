@@ -3,6 +3,7 @@ using Npgsql;
 using NpgsqlTypes;
 using rinha_de_backend_2024_q1_dotnet_API.Entities;
 using rinha_de_backend_2024_q1_dotnet_API.Models.Extrato;
+using rinha_de_backend_2024_q1_dotnet_API.Models.Transacoes;
 using rinha_de_backend_2024_q1_dotnet_API.Options;
 using System.Drawing;
 
@@ -14,8 +15,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
 
         private async Task<NpgsqlConnection> CreateConnectionAsync() => await _dataSource.OpenConnectionAsync();
 
-
-        public async Task<object?> AddTransactionAsync(int valor, int id, string descricao, char tipo)
+        public async Task<TransacoesResponse?> AddTransactionAsync(int valor, int id, string descricao, char tipo)
         {
             NpgsqlCommand command;
             if (tipo == 'd')
@@ -23,7 +23,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             else
                 command = GetCreditoCommand();
 
-            using var connection = await CreateConnectionAsync();             
+            using var connection = await CreateConnectionAsync();
             command.Parameters.Add(new NpgsqlParameter<int>() { NpgsqlDbType = NpgsqlDbType.Integer });
             command.Parameters.Add(new NpgsqlParameter<int>() { NpgsqlDbType = NpgsqlDbType.Integer });
             command.Parameters.Add(new NpgsqlParameter<string>() { NpgsqlDbType = NpgsqlDbType.Varchar });
@@ -41,7 +41,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
                     return null;
                 }
 
-                return new { Limite = reader.GetInt32(1), Saldo = reader.GetInt32(0) };
+                return new TransacoesResponse(reader.GetInt32(1), reader.GetInt32(0));
             }
 
             return null;
@@ -81,9 +81,9 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             return extrato;
         }
 
-        private async Task<SaldoViewModel> GetSaldoAsync(int idCliente)
+        private async Task<SaldoResponse> GetSaldoAsync(int idCliente)
         {
-            var saldo = new SaldoViewModel();
+            var saldo = new SaldoResponse();
             using var connection = await CreateConnectionAsync();
             using var command = new NpgsqlCommand("SELECT saldo, limite FROM CLIENTE WHERE ID = @IdCliente");
             command.Connection = connection;
@@ -91,7 +91,7 @@ namespace rinha_de_backend_2024_q1_dotnet_API.Repository
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                saldo = new SaldoViewModel
+                saldo = new SaldoResponse
                 {
                     Total = reader.GetInt32(0),
                     Limite = reader.GetInt32(1),
