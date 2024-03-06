@@ -15,6 +15,8 @@
             "ORDER BY data_transacao DESC " +
             "LIMIT 10";
 
+        public static string GetSaldo =
+            "SELECT saldo, limite FROM CLIENTE WHERE ID = @IdCliente";
 
     }
 }

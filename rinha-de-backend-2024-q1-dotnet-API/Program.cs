@@ -16,13 +16,13 @@ var connectionString = builder.Configuration.GetConnectionString("RinhaDotNet");
 builder.Services.Configure<DbOptions>(options
         => options.ConnectionString = connectionString
             ?? throw new ArgumentNullException(connectionString));
-builder.Services.AddSingleton<Database>();
+builder.Services.AddSingleton<CommandProvider>();
 
 var app = builder.Build();
 var clienteApi = app.MapGroup("/clientes");
 
 
-clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, Database database) =>
+clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, CommandProvider commandProvider) =>
 {
     if (id is (< 1 or > 5))
         return TypedResults.NotFound();
@@ -33,20 +33,65 @@ clienteApi.MapPost("{id}/transacoes", async (int id, TransacoesRequest request, 
     if (request.Tipo != 'c' && request.Tipo != 'd')
         return TypedResults.UnprocessableEntity();
 
-    var response = await database.AddTransactionAsync(valor, id, request.Descricao, request.Tipo);
+    TransacoesResponse response = null!;
 
-    if (response is null)
-        return TypedResults.UnprocessableEntity();
+    var command = commandProvider.GetTransactionCommandAsync(valor, id, request.Descricao, request.Tipo);
+    using var connection = await commandProvider.CreateConnectionAsync();
+    command.Connection = connection;
+
+    using var reader = await command.ExecuteReaderAsync();
+    while (await reader.ReadAsync())
+    {
+        if (reader.GetBoolean(2) is false)
+        {
+            return TypedResults.UnprocessableEntity();
+        }
+
+        response = new(reader.GetInt32(1), reader.GetInt32(0));
+    }
 
     return Results.Ok(response);
 });
 
-clienteApi.MapGet("{id}/extrato", async (int id, Database database) =>
+clienteApi.MapGet("{id}/extrato", async (int id, CommandProvider commandProvider) =>
 {
     if (id is (< 1 or > 5))
         return TypedResults.NotFound();
 
-    var extrato = await database.GetExtratoAsync(id);
+    var saldoCommand = commandProvider.GetSaldoCommand(id);
+    using var connection = await commandProvider.CreateConnectionAsync();
+    saldoCommand.Connection = connection;
+
+    using var saldoReader = await saldoCommand.ExecuteReaderAsync();
+
+    var saldo = new SaldoResponse();
+    while (await saldoReader.ReadAsync())
+    {
+        saldo = new SaldoResponse
+        {
+            Total = saldoReader.GetInt32(0),
+            Limite = saldoReader.GetInt32(1),
+            DataExtrato = DateTime.Now
+        };
+    }
+
+    await saldoReader.DisposeAsync();
+
+    var extratoCommand = commandProvider.GetExtratoCommandAsync(id);
+    extratoCommand.Connection = connection;
+
+    using var extratoReader = await extratoCommand.ExecuteReaderAsync();
+
+    var extrato = new ExtratoViewModel() { Saldo = saldo, UltimasTransacoes = [] };
+    while (await extratoReader.ReadAsync())
+    {
+        extrato.UltimasTransacoes.Add(new Transacao(
+            extratoReader.GetInt32(0),
+            extratoReader.GetChar(1),
+            extratoReader.GetDateTime(3),
+            extratoReader.GetString(2),
+            extratoReader.GetInt32(4)));
+    }
 
     return Results.Ok(extrato);
 });

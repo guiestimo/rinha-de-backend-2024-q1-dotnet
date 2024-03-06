@@ -2,7 +2,7 @@
 
 namespace rinha_de_backend_2024_q1_dotnet_API.Entities
 {
-    public record struct Transacao(int Valor, char Tipo, DateTime DataTransacao, string Descricao, int ClienteId)
+    public record Transacao(int Valor, char Tipo, DateTime DataTransacao, string Descricao, int ClienteId)
     {
         [JsonIgnore]
         public int ClienteId { get; private set; } = ClienteId;

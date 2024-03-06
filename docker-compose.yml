@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  api01: &api
+    image: guiestimo/rinha-2024-q1-dotnet-api:latest
+    hostname: api01
+    container_name: rinha-2024-q1-api01
+    environment:
+      - ConnectionStrings__RinhaDotNet=Host=rinha;Username=postgres;Password=root;Database=postgres;Pooling=true;Minimum Pool Size=50;Maximum Pool Size=2000;Multiplexing=true;Timeout=15;Command Timeout=15;Cancellation Timeout=-1;No Reset On Close=true;Max Auto Prepare=20;Auto Prepare Min Usages=1;
+      - DOTNET_DiagnosticPorts=/app/diag/dotnet-monitor.sock
+    depends_on:
+      - db
+      - monitor
+    volumes:
+      - "./:/app/"
+    entrypoint: [ "dotnet", "/app/src/bin/Debug/net6.0/AspnetTemplate.dll" ]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: '80MB'
+  api02:
+    <<: *api
+    hostname: api02
+    container_name: rinha-2024-q1-api02
+  monitor:
+    image: mcr.microsoft.com/dotnet/monitor:8
+    environment:
+      DOTNETMONITOR_Storage__DefaultSharedPath: /diag
+      DOTNETMONITOR_Metrics__Endpoints: http://+:52325
+      DOTNETMONITOR_Urls: http://+:52323
+      DOTNETMONITOR_DiagnosticPort__ConnectionMode: listen
+      DOTNETMONITOR_DiagnosticPort__EndpointName: /diag/dotnet-monitor.sock
+    command: ["collect", "--no-auth"]
+    volumes:
+      - "/home/ftathiago/src/rinha-backend-2024-q1/diag:/diag"
+    ports:
+      - "52323:52323"
+      - "52325:52325"
+  nginx:
+    image: nginx:latest
+    container_name: rinha-2024-q1-nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api01
+      - api02
+      - monitor
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: '134MB'  
+  db:
+    image: postgres:latest
+    container_name: rinha-2024-q1-postgres
+    hostname: rinha
+    environment:
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./script.sql:/docker-entrypoint-initdb.d/script.sql
+    command: 'postgres -c max_connections=300 -c shared_buffers=96MB -c checkpoint_timeout=600 -c synchronous_commit=off -c fsync=off -c full_page_writes=off -c work_mem=16MB'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '256MB'
+networks:
+  default:
+    driver: bridge
+    name: rinha-nginx-2024q1
