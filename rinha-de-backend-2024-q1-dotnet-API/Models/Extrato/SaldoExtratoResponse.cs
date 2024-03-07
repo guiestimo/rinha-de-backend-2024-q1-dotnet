@@ -2,7 +2,7 @@
 
 namespace rinha_de_backend_2024_q1_dotnet_API.Models.Extrato
 {
-    public record SaldoResponse
+    public record struct SaldoExtratoResponse
     {
         public int Total { get; set; }
 
